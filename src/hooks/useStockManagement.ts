@@ -162,16 +162,20 @@ export const useStockManagement = () => {
       return;
     }
     
-    const productionItems = [...productionList];
+    // Criar uma cópia da lista de produção para evitar problemas com a iteração
+    const itemsToProcess = [...productionList];
     
-    for (const item of productionItems) {
+    // Processar cada item da lista individualmente
+    for (const item of itemsToProcess) {
       handleAddBucket(item.flavorId, item.quantity);
+      console.log(`Adicionando ${item.quantity} baldes do sabor ID ${item.flavorId} ao estoque`);
     }
     
     toast.success("Fabricação concluída com sucesso!", {
-      description: `${productionItems.length} sabores foram fabricados e adicionados ao estoque.`
+      description: `${itemsToProcess.length} sabores foram fabricados e adicionados ao estoque.`
     });
     
+    // Limpar a lista de produção após processar todos os itens
     setProductionList([]);
   };
   
