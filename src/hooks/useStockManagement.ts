@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -13,7 +12,6 @@ export const useStockManagement = () => {
   const [productionList, setProductionList] = useState<ProductionItem[]>([]);
 
   useEffect(() => {
-    // Load sample data on initialization
     const loadSampleData = () => {
       const sampleBuckets: Bucket[] = [
         {
@@ -162,20 +160,17 @@ export const useStockManagement = () => {
       return;
     }
     
-    // Criar uma cópia da lista de produção para evitar problemas com a iteração
     const itemsToProcess = [...productionList];
     
-    // Processar cada item da lista individualmente
-    for (const item of itemsToProcess) {
-      handleAddBucket(item.flavorId, item.quantity);
+    itemsToProcess.forEach(item => {
       console.log(`Adicionando ${item.quantity} baldes do sabor ID ${item.flavorId} ao estoque`);
-    }
+      handleAddBucket(item.flavorId, item.quantity);
+    });
     
     toast.success("Fabricação concluída com sucesso!", {
       description: `${itemsToProcess.length} sabores foram fabricados e adicionados ao estoque.`
     });
     
-    // Limpar a lista de produção após processar todos os itens
     setProductionList([]);
   };
   
