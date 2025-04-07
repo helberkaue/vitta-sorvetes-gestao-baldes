@@ -7,7 +7,7 @@ import BucketCard from '@/components/BucketCard';
 import AddBucketForm from '@/components/AddBucketForm';
 import { Bucket, BucketWithFlavor } from '@/types/bucket';
 import { flavors, Flavor } from '@/data/flavors';
-import { Search, IceCream, Info, Package2 } from 'lucide-react';
+import { Search, IceCream, Info, Package2, IceCreamCone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   Card, 
@@ -18,6 +18,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
@@ -117,6 +118,12 @@ const Dashboard = () => {
     setBuckets(updatedBuckets);
   };
 
+  const handleManageIceCream = () => {
+    toast.success("Gerenciando sorvetes!", { 
+      description: "Esta função seria conectada ao Supabase para gerenciamento dos sabores."
+    });
+  };
+
   // Adicionar flavor aos buckets
   const bucketsWithFlavor: BucketWithFlavor[] = buckets.map(bucket => {
     const flavor = flavors.find(f => f.id === bucket.flavorId) || { id: 0, name: "Desconhecido" };
@@ -148,6 +155,14 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <Button 
+              className="bg-vitta-pink hover:bg-vitta-lightpink flex items-center gap-2"
+              onClick={handleManageIceCream}
+            >
+              <IceCreamCone size={18} />
+              Gerenciar Sorvete
+            </Button>
+            
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
