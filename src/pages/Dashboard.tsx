@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Header from '@/components/Header';
@@ -6,7 +7,7 @@ import BucketCard from '@/components/BucketCard';
 import AddBucketForm from '@/components/AddBucketForm';
 import { Bucket, BucketWithFlavor } from '@/types/bucket';
 import { flavors, Flavor } from '@/data/flavors';
-import { Search, IceCream, Info, Package2, IceCreamCone, Factory, Truck } from 'lucide-react';
+import { Search, IceCream, Package2, Factory, Truck, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   Card, 
@@ -18,12 +19,22 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const Dashboard = () => {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [mainTab, setMainTab] = useState('estoque');
+  const [selectedFlavorId, setSelectedFlavorId] = useState<string>("");
+  const [productionQuantity, setProductionQuantity] = useState<number>(1);
 
   useEffect(() => {
     const loadSampleData = () => {
@@ -118,10 +129,25 @@ const Dashboard = () => {
     });
   };
 
-  const handleStartProduction = (flavor: Flavor) => {
-    toast.success(`Iniciando produção de ${flavor.name}!`, {
-      description: "Em um sistema real, isso registraria o início de um ciclo de produção no Supabase."
-    });
+  const handleStartProduction = () => {
+    if (!selectedFlavorId || productionQuantity <= 0) {
+      toast.error("Por favor, selecione um sabor e uma quantidade válida");
+      return;
+    }
+
+    const flavorId = parseInt(selectedFlavorId);
+    const flavor = flavors.find(f => f.id === flavorId);
+    
+    if (flavor) {
+      handleAddBucket(flavorId, productionQuantity);
+      toast.success(`${productionQuantity} baldes de ${flavor.name} fabricados com sucesso!`, {
+        description: "Os baldes foram adicionados ao estoque."
+      });
+      
+      // Reset the form
+      setSelectedFlavorId("");
+      setProductionQuantity(1);
+    }
   };
 
   const bucketsWithFlavor: BucketWithFlavor[] = buckets.map(bucket => {
@@ -137,8 +163,6 @@ const Dashboard = () => {
   );
 
   const totalBuckets = buckets.reduce((sum, bucket) => sum + bucket.quantity, 0);
-  const uniqueFlavors = new Set(buckets.map(bucket => bucket.flavorId)).size;
-  const mostPopularBucket = [...bucketsWithFlavor].sort((a, b) => b.quantity - a.quantity)[0];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -156,7 +180,7 @@ const Dashboard = () => {
               className="bg-vitta-pink hover:bg-vitta-lightpink flex items-center gap-2"
               onClick={handleManageIceCream}
             >
-              <IceCreamCone size={18} />
+              <IceCream size={18} />
               Gerenciar Sorvete
             </Button>
             
@@ -174,7 +198,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 mb-8">
           <Card className="hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-medium">Total de Baldes</CardTitle>
@@ -183,32 +207,6 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-3xl font-bold">{totalBuckets}</div>
               <p className="text-xs text-gray-500 mt-1">baldes em estoque</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-all">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Sabores Disponíveis</CardTitle>
-              <IceCream className="h-5 w-5 text-vitta-pink" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{uniqueFlavors}</div>
-              <p className="text-xs text-gray-500 mt-1">de {flavors.length} sabores possíveis</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-all">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium">Sabor Mais Popular</CardTitle>
-              <Info className="h-5 w-5 text-vitta-pink" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold truncate">
-                {mostPopularBucket ? mostPopularBucket.flavor.name : 'N/A'}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                {mostPopularBucket ? `${mostPopularBucket.quantity} baldes em estoque` : 'Nenhum balde cadastrado'}
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -285,36 +283,46 @@ const Dashboard = () => {
                 Fabricação de Sorvetes
               </h3>
               <p className="text-gray-600 mb-6">
-                Selecione os sabores que deseja fabricar para aumentar o estoque. Em um sistema completo,
-                isso seria conectado ao processo de produção e registrado no banco de dados.
+                Selecione o sabor e a quantidade que deseja fabricar para aumentar o estoque.
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {flavors.map(flavor => {
-                  const inStock = bucketsWithFlavor.find(b => b.flavor.id === flavor.id);
-                  return (
-                    <Card key={flavor.id} className="border border-gray-200">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">{flavor.name}</CardTitle>
-                        <CardDescription>
-                          {inStock ? `${inStock.quantity} baldes em estoque` : 'Não disponível em estoque'}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardFooter className="flex justify-between pt-2">
-                        <div className="text-sm text-gray-500">
-                          ID: {flavor.id}
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleStartProduction(flavor)}
-                          className="bg-vitta-pink hover:bg-vitta-lightpink text-white border-0"
-                        >
-                          <Truck className="h-4 w-4 mr-2" /> Fabricar
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
+              <div className="grid gap-6 max-w-md mx-auto">
+                <div className="grid gap-2">
+                  <Label htmlFor="flavor">Sabor</Label>
+                  <Select
+                    value={selectedFlavorId}
+                    onValueChange={setSelectedFlavorId}
+                  >
+                    <SelectTrigger id="flavor">
+                      <SelectValue placeholder="Selecione um sabor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {flavors.map(flavor => (
+                        <SelectItem key={flavor.id} value={flavor.id.toString()}>
+                          {flavor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="quantity">Quantidade</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={productionQuantity}
+                    onChange={(e) => setProductionQuantity(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+                
+                <Button
+                  onClick={handleStartProduction}
+                  className="w-full bg-vitta-pink hover:bg-vitta-lightpink"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Adicionar ao Estoque
+                </Button>
               </div>
             </div>
           </TabsContent>
