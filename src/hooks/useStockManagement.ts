@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -160,17 +161,49 @@ export const useStockManagement = () => {
       return;
     }
     
+    // Create a new array with all items from the production list
     const itemsToProcess = [...productionList];
     
-    itemsToProcess.forEach(item => {
-      console.log(`Adicionando ${item.quantity} baldes do sabor ID ${item.flavorId} ao estoque`);
-      handleAddBucket(item.flavorId, item.quantity);
+    // First log all items to be processed to confirm they exist
+    console.log("Items to process:", itemsToProcess);
+    
+    // Process each item individually using a proper loop
+    itemsToProcess.forEach((item) => {
+      const flavorName = flavors.find(f => f.id === item.flavorId)?.name || "Desconhecido";
+      console.log(`Processando: ${item.quantity} baldes de ${flavorName} (ID: ${item.flavorId})`);
+      
+      // Directly update the buckets state to ensure all updates are applied
+      setBuckets(currentBuckets => {
+        const existingBucketIndex = currentBuckets.findIndex(b => b.flavorId === item.flavorId);
+        
+        if (existingBucketIndex >= 0) {
+          // Update existing bucket
+          const updatedBuckets = [...currentBuckets];
+          updatedBuckets[existingBucketIndex] = {
+            ...updatedBuckets[existingBucketIndex],
+            quantity: updatedBuckets[existingBucketIndex].quantity + item.quantity,
+            updatedAt: new Date()
+          };
+          return updatedBuckets;
+        } else {
+          // Create new bucket
+          const newBucket: Bucket = {
+            id: uuidv4(),
+            flavorId: item.flavorId,
+            quantity: item.quantity,
+            addedAt: new Date(),
+            updatedAt: new Date()
+          };
+          return [...currentBuckets, newBucket];
+        }
+      });
     });
     
     toast.success("Fabricação concluída com sucesso!", {
       description: `${itemsToProcess.length} sabores foram fabricados e adicionados ao estoque.`
     });
     
+    // Clear production list after processing
     setProductionList([]);
   };
   
