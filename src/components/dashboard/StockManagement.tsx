@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BucketWithFlavor } from '@/types/bucket';
 import BucketsList from './BucketsList';
-import DateRangeFilter from './DateRangeFilter';
+import MonthlyProductionFilter from './MonthlyProductionFilter';
 
 interface StockManagementProps {
   filteredBuckets: BucketWithFlavor[];
@@ -25,19 +25,9 @@ const StockManagement = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
       <TabsList>
-        <TabsTrigger value="all">Todos os Sabores</TabsTrigger>
         <TabsTrigger value="available">Disponíveis em Estoque</TabsTrigger>
-        <TabsTrigger value="date">Por Data</TabsTrigger>
+        <TabsTrigger value="monthly">Por Mês</TabsTrigger>
       </TabsList>
-      
-      <TabsContent value="all" className="mt-6">
-        <BucketsList 
-          buckets={filteredBuckets}
-          onIncrementBucket={onIncrementBucket}
-          onDecrementBucket={onDecrementBucket}
-          onAddBucket={onAddBucket}
-        />
-      </TabsContent>
       
       <TabsContent value="available" className="mt-6">
         <BucketsList 
@@ -48,8 +38,8 @@ const StockManagement = ({
         />
       </TabsContent>
       
-      <TabsContent value="date" className="mt-6">
-        <DateRangeFilter />
+      <TabsContent value="monthly" className="mt-6">
+        <MonthlyProductionFilter />
       </TabsContent>
     </Tabs>
   );

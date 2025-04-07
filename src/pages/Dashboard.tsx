@@ -15,7 +15,7 @@ import ProductionManagement from '@/components/dashboard/ProductionManagement';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('available'); // Changed from 'all' to 'available'
   const [mainTab, setMainTab] = useState('estoque');
   
   const {
