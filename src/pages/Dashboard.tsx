@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Header from '@/components/Header';
@@ -7,7 +6,7 @@ import BucketCard from '@/components/BucketCard';
 import AddBucketForm from '@/components/AddBucketForm';
 import { Bucket, BucketWithFlavor } from '@/types/bucket';
 import { flavors, Flavor } from '@/data/flavors';
-import { Search, IceCream, Info, Package2, IceCreamCone } from 'lucide-react';
+import { Search, IceCream, Info, Package2, IceCreamCone, Factory, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   Card, 
@@ -24,10 +23,9 @@ const Dashboard = () => {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [mainTab, setMainTab] = useState('estoque');
 
   useEffect(() => {
-    // Aqui você implementaria a conexão com o Supabase
-    // Por enquanto, vamos carregar dados de exemplo
     const loadSampleData = () => {
       const sampleBuckets: Bucket[] = [
         {
@@ -60,11 +58,9 @@ const Dashboard = () => {
   }, []);
 
   const handleAddBucket = (flavorId: number, quantity: number) => {
-    // Verificar se o sabor já existe
     const existingBucketIndex = buckets.findIndex(b => b.flavorId === flavorId);
     
     if (existingBucketIndex >= 0) {
-      // Atualizar quantidade se o sabor já existe
       const updatedBuckets = [...buckets];
       updatedBuckets[existingBucketIndex] = {
         ...updatedBuckets[existingBucketIndex],
@@ -73,7 +69,6 @@ const Dashboard = () => {
       };
       setBuckets(updatedBuckets);
     } else {
-      // Adicionar novo sabor se não existir
       const newBucket: Bucket = {
         id: uuidv4(),
         flavorId,
@@ -112,7 +107,6 @@ const Dashboard = () => {
       return bucket;
     });
     
-    // Remover baldes com quantidade zero
     updatedBuckets = updatedBuckets.filter(bucket => bucket.quantity > 0);
     
     setBuckets(updatedBuckets);
@@ -124,7 +118,12 @@ const Dashboard = () => {
     });
   };
 
-  // Adicionar flavor aos buckets
+  const handleStartProduction = (flavor: Flavor) => {
+    toast.success(`Iniciando produção de ${flavor.name}!`, {
+      description: "Em um sistema real, isso registraria o início de um ciclo de produção no Supabase."
+    });
+  };
+
   const bucketsWithFlavor: BucketWithFlavor[] = buckets.map(bucket => {
     const flavor = flavors.find(f => f.id === bucket.flavorId) || { id: 0, name: "Desconhecido" };
     return {
@@ -133,12 +132,10 @@ const Dashboard = () => {
     };
   });
 
-  // Filtrar por pesquisa
   const filteredBuckets = bucketsWithFlavor.filter(bucket => 
     bucket.flavor.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calcular estatísticas
   const totalBuckets = buckets.reduce((sum, bucket) => sum + bucket.quantity, 0);
   const uniqueFlavors = new Set(buckets.map(bucket => bucket.flavorId)).size;
   const mostPopularBucket = [...bucketsWithFlavor].sort((a, b) => b.quantity - a.quantity)[0];
@@ -177,7 +174,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -217,54 +213,110 @@ const Dashboard = () => {
           </Card>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList>
-            <TabsTrigger value="all">Todos os Sabores</TabsTrigger>
-            <TabsTrigger value="available">Disponíveis em Estoque</TabsTrigger>
+        <Tabs value={mainTab} onValueChange={setMainTab} className="mb-6">
+          <TabsList className="w-full max-w-md mx-auto bg-gray-100">
+            <TabsTrigger value="estoque" className="flex-1">
+              <Package2 size={16} className="mr-2" />
+              Gerenciar Estoque
+            </TabsTrigger>
+            <TabsTrigger value="fabricar" className="flex-1">
+              <Factory size={16} className="mr-2" />
+              Fabricar Sorvetes
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="all" className="mt-6">
-            {filteredBuckets.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredBuckets.map((bucket) => (
-                  <BucketCard
-                    key={bucket.id}
-                    bucket={bucket}
-                    onIncrement={handleIncrementBucket}
-                    onDecrement={handleDecrementBucket}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <IceCream className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-1">Nenhum balde encontrado</h3>
-                <p className="text-gray-500 mb-4">Adicione baldes de sorvete para começar o gerenciamento do estoque.</p>
-                <AddBucketForm onAddBucket={handleAddBucket} />
-              </div>
-            )}
+          <TabsContent value="estoque" className="mt-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+              <TabsList>
+                <TabsTrigger value="all">Todos os Sabores</TabsTrigger>
+                <TabsTrigger value="available">Disponíveis em Estoque</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all" className="mt-6">
+                {filteredBuckets.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {filteredBuckets.map((bucket) => (
+                      <BucketCard
+                        key={bucket.id}
+                        bucket={bucket}
+                        onIncrement={handleIncrementBucket}
+                        onDecrement={handleDecrementBucket}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <IceCream className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-xl font-medium text-gray-900 mb-1">Nenhum balde encontrado</h3>
+                    <p className="text-gray-500 mb-4">Adicione baldes de sorvete para começar o gerenciamento do estoque.</p>
+                    <AddBucketForm onAddBucket={handleAddBucket} />
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="available" className="mt-6">
+                {filteredBuckets.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {filteredBuckets.map((bucket) => (
+                      <BucketCard
+                        key={bucket.id}
+                        bucket={bucket}
+                        onIncrement={handleIncrementBucket}
+                        onDecrement={handleDecrementBucket}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <IceCream className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-xl font-medium text-gray-900 mb-1">Nenhum balde em estoque</h3>
+                    <p className="text-gray-500 mb-4">Adicione baldes de sorvete para começar o gerenciamento do estoque.</p>
+                    <AddBucketForm onAddBucket={handleAddBucket} />
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </TabsContent>
           
-          <TabsContent value="available" className="mt-6">
-            {filteredBuckets.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredBuckets.map((bucket) => (
-                  <BucketCard
-                    key={bucket.id}
-                    bucket={bucket}
-                    onIncrement={handleIncrementBucket}
-                    onDecrement={handleDecrementBucket}
-                  />
-                ))}
+          <TabsContent value="fabricar" className="mt-6">
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Factory size={20} />
+                Fabricação de Sorvetes
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Selecione os sabores que deseja fabricar para aumentar o estoque. Em um sistema completo,
+                isso seria conectado ao processo de produção e registrado no banco de dados.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {flavors.map(flavor => {
+                  const inStock = bucketsWithFlavor.find(b => b.flavor.id === flavor.id);
+                  return (
+                    <Card key={flavor.id} className="border border-gray-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{flavor.name}</CardTitle>
+                        <CardDescription>
+                          {inStock ? `${inStock.quantity} baldes em estoque` : 'Não disponível em estoque'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardFooter className="flex justify-between pt-2">
+                        <div className="text-sm text-gray-500">
+                          ID: {flavor.id}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleStartProduction(flavor)}
+                          className="bg-vitta-pink hover:bg-vitta-lightpink text-white border-0"
+                        >
+                          <Truck className="h-4 w-4 mr-2" /> Fabricar
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <IceCream className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-1">Nenhum balde em estoque</h3>
-                <p className="text-gray-500 mb-4">Adicione baldes de sorvete para começar o gerenciamento do estoque.</p>
-                <AddBucketForm onAddBucket={handleAddBucket} />
-              </div>
-            )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
