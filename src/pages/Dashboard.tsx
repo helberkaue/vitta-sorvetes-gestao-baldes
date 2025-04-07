@@ -175,16 +175,16 @@ const Dashboard = () => {
       return;
     }
     
-    // Create a copy of the production list to iterate over
-    const productionListCopy = [...productionList];
+    // Create a copy of the production list
+    const productionItems = [...productionList];
     
     // Add all items from the production list to the stock
-    productionListCopy.forEach(item => {
+    for (const item of productionItems) {
       handleAddBucket(item.flavorId, item.quantity);
-    });
+    }
     
     toast.success("Fabricação concluída com sucesso!", {
-      description: `${productionListCopy.length} sabores foram fabricados e adicionados ao estoque.`
+      description: `${productionItems.length} sabores foram fabricados e adicionados ao estoque.`
     });
     
     // Clear the production list
@@ -259,3 +259,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
