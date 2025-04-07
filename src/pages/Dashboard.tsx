@@ -7,7 +7,7 @@ import BucketCard from '@/components/BucketCard';
 import AddBucketForm from '@/components/AddBucketForm';
 import { Bucket, BucketWithFlavor } from '@/types/bucket';
 import { flavors, Flavor } from '@/data/flavors';
-import { Search, IceCream, Package2, Factory, Truck, Plus } from 'lucide-react';
+import { Search, IceCream, Package2, Factory, Truck, Plus, PlayCircle, ListTodo, ListPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   Card, 
@@ -20,6 +20,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,6 +36,13 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
+interface ProductionItem {
+  id: string;
+  flavorId: number;
+  quantity: number;
+  addedAt: Date;
+}
+
 const Dashboard = () => {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +50,7 @@ const Dashboard = () => {
   const [mainTab, setMainTab] = useState('estoque');
   const [selectedFlavorId, setSelectedFlavorId] = useState<string>("");
   const [productionQuantity, setProductionQuantity] = useState<number>(1);
+  const [productionList, setProductionList] = useState<ProductionItem[]>([]);
 
   useEffect(() => {
     const loadSampleData = () => {
@@ -62,7 +78,24 @@ const Dashboard = () => {
         }
       ];
       
+      // Amostra de lista de produção
+      const sampleProductionList: ProductionItem[] = [
+        {
+          id: uuidv4(),
+          flavorId: 3, // Baunilha
+          quantity: 8,
+          addedAt: new Date()
+        },
+        {
+          id: uuidv4(),
+          flavorId: 4, // Creme
+          quantity: 6,
+          addedAt: new Date()
+        }
+      ];
+      
       setBuckets(sampleBuckets);
+      setProductionList(sampleProductionList);
     };
     
     loadSampleData();
@@ -129,7 +162,7 @@ const Dashboard = () => {
     });
   };
 
-  const handleStartProduction = () => {
+  const handleAddToProductionList = () => {
     if (!selectedFlavorId || productionQuantity <= 0) {
       toast.error("Por favor, selecione um sabor e uma quantidade válida");
       return;
@@ -139,15 +172,59 @@ const Dashboard = () => {
     const flavor = flavors.find(f => f.id === flavorId);
     
     if (flavor) {
-      handleAddBucket(flavorId, productionQuantity);
-      toast.success(`${productionQuantity} baldes de ${flavor.name} fabricados com sucesso!`, {
-        description: "Os baldes foram adicionados ao estoque."
-      });
+      const existingItem = productionList.find(item => item.flavorId === flavorId);
+      
+      if (existingItem) {
+        const updatedList = productionList.map(item => {
+          if (item.flavorId === flavorId) {
+            return {
+              ...item,
+              quantity: item.quantity + productionQuantity
+            };
+          }
+          return item;
+        });
+        setProductionList(updatedList);
+      } else {
+        const newItem: ProductionItem = {
+          id: uuidv4(),
+          flavorId,
+          quantity: productionQuantity,
+          addedAt: new Date()
+        };
+        setProductionList([...productionList, newItem]);
+      }
+      
+      toast.success(`${productionQuantity} baldes de ${flavor.name} adicionados à lista de fabricação!`);
       
       // Reset the form
       setSelectedFlavorId("");
       setProductionQuantity(1);
     }
+  };
+  
+  const handleStartProduction = () => {
+    if (productionList.length === 0) {
+      toast.error("A lista de fabricação está vazia!");
+      return;
+    }
+    
+    // Adiciona todos os itens da lista de produção ao estoque
+    productionList.forEach(item => {
+      handleAddBucket(item.flavorId, item.quantity);
+    });
+    
+    toast.success("Fabricação concluída com sucesso!", {
+      description: `${productionList.length} sabores foram fabricados e adicionados ao estoque.`
+    });
+    
+    // Limpa a lista de produção
+    setProductionList([]);
+  };
+  
+  const handleRemoveFromProductionList = (id: string) => {
+    const updatedList = productionList.filter(item => item.id !== id);
+    setProductionList(updatedList);
   };
 
   const bucketsWithFlavor: BucketWithFlavor[] = buckets.map(bucket => {
@@ -219,7 +296,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="fabricar" className="flex-1">
               <Factory size={16} className="mr-2" />
-              Fabricar Sorvetes
+              Lista de Fabricação
             </TabsTrigger>
           </TabsList>
           
@@ -277,52 +354,113 @@ const Dashboard = () => {
           </TabsContent>
           
           <TabsContent value="fabricar" className="mt-6">
-            <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Factory size={20} />
-                Fabricação de Sorvetes
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Selecione o sabor e a quantidade que deseja fabricar para aumentar o estoque.
-              </p>
-              
-              <div className="grid gap-6 max-w-md mx-auto">
-                <div className="grid gap-2">
-                  <Label htmlFor="flavor">Sabor</Label>
-                  <Select
-                    value={selectedFlavorId}
-                    onValueChange={setSelectedFlavorId}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Formulário para adicionar à lista de fabricação */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <ListPlus size={20} />
+                  Adicionar à Lista de Fabricação
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Adicione sabores à lista para fabricação futura.
+                </p>
+                
+                <div className="grid gap-6">
+                  <div className="grid gap-2">
+                    <Label htmlFor="flavor">Sabor</Label>
+                    <Select
+                      value={selectedFlavorId}
+                      onValueChange={setSelectedFlavorId}
+                    >
+                      <SelectTrigger id="flavor">
+                        <SelectValue placeholder="Selecione um sabor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {flavors.map(flavor => (
+                          <SelectItem key={flavor.id} value={flavor.id.toString()}>
+                            {flavor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="quantity">Quantidade</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      value={productionQuantity}
+                      onChange={(e) => setProductionQuantity(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={handleAddToProductionList}
+                    className="w-full bg-blue-500 hover:bg-blue-600"
                   >
-                    <SelectTrigger id="flavor">
-                      <SelectValue placeholder="Selecione um sabor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {flavors.map(flavor => (
-                        <SelectItem key={flavor.id} value={flavor.id.toString()}>
-                          {flavor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Plus className="mr-2 h-4 w-4" /> Adicionar à Lista
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Lista de fabricação */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <ListTodo size={20} />
+                    Lista para Fabricação
+                  </h3>
+                  
+                  <Button
+                    onClick={handleStartProduction}
+                    className="bg-vitta-pink hover:bg-vitta-lightpink"
+                    disabled={productionList.length === 0}
+                  >
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Iniciar Fabricação
+                  </Button>
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="quantity">Quantidade</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={productionQuantity}
-                    onChange={(e) => setProductionQuantity(parseInt(e.target.value) || 0)}
-                  />
-                </div>
-                
-                <Button
-                  onClick={handleStartProduction}
-                  className="w-full bg-vitta-pink hover:bg-vitta-lightpink"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Adicionar ao Estoque
-                </Button>
+                {productionList.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Sabor</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {productionList.map(item => {
+                        const flavor = flavors.find(f => f.id === item.flavorId) || { name: "Desconhecido" };
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{flavor.name}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => handleRemoveFromProductionList(item.id)}
+                              >
+                                Remover
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-12">
+                    <Factory className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Lista de fabricação vazia</h3>
+                    <p className="text-gray-500 mb-4">Adicione sabores à lista para iniciar a fabricação.</p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
