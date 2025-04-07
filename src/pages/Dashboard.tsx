@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,7 +49,6 @@ const Dashboard = () => {
         }
       ];
       
-      // Amostra de lista de produção
       const sampleProductionList: ProductionItem[] = [
         {
           id: uuidv4(),
@@ -163,7 +161,6 @@ const Dashboard = () => {
       
       toast.success(`${productionQuantity} baldes de ${flavor.name} adicionados à lista de fabricação!`);
       
-      // Reset the form
       setSelectedFlavorId("");
       setProductionQuantity(1);
     }
@@ -175,10 +172,8 @@ const Dashboard = () => {
       return;
     }
     
-    // Create a copy of the production list
     const productionItems = [...productionList];
     
-    // Add all items from the production list to the stock
     for (const item of productionItems) {
       handleAddBucket(item.flavorId, item.quantity);
     }
@@ -187,7 +182,6 @@ const Dashboard = () => {
       description: `${productionItems.length} sabores foram fabricados e adicionados ao estoque.`
     });
     
-    // Clear the production list
     setProductionList([]);
   };
   
@@ -259,4 +253,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

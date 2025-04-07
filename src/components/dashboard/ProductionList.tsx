@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { flavors } from '@/data/flavors';
 import { Factory, ListTodo, PlayCircle } from 'lucide-react';
-
-interface ProductionItem {
-  id: string;
-  flavorId: number;
-  quantity: number;
-  addedAt: Date;
-}
+import { ProductionItem } from '@/types/production';
 
 interface ProductionListProps {
   productionList: ProductionItem[];
